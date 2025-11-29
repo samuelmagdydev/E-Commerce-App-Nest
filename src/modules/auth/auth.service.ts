@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { IUser } from 'src/common';
 import { UserRepository } from 'src/DB';
-import { SignupBodyDTO } from './dto/signup.dto';
+import { SignupBodyDTO } from './dto/auth.dto';
 
 @Injectable()
 export class AuthenticationService {

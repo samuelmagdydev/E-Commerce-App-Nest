@@ -3,10 +3,8 @@ import {
   ConflictException,
   Injectable,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { FlattenMaps, Model } from 'mongoose';
 import { IUser } from 'src/common';
-import { User, UserDocument, UserRepository } from 'src/DB';
+import { UserRepository } from 'src/DB';
 import { SignupBodyDTO } from './dto/signup.dto';
 
 @Injectable()

@@ -6,7 +6,7 @@ import {
   Virtual,
 } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import { GenderEnum, ProviderEnum } from 'src/common';
+import { GenderEnum, generateHash, ProviderEnum } from 'src/common';
 
 @Schema({
   strictQuery: true,
@@ -85,10 +85,31 @@ export class User {
   })
   changeCredentials: Date;
 }
-
+export type UserDocument = HydratedDocument<User>;
 const userSchema = SchemaFactory.createForClass(User);
 
-export type UserDocument = HydratedDocument<User>;
+userSchema.pre('save', async function (next) {
+  if (this.isModified('password')) {
+    this.password = await generateHash(this.password);
+  }
+  next();
+});
+
 export const UserModel = MongooseModule.forFeature([
   { name: User.name, schema: userSchema },
 ]);
+
+// export const UserModel = MongooseModule.forFeatureAsync([
+//   {
+//     name: User.name,
+//     useFactory: () => {
+//       userSchema.pre('save', async function (next) {
+//         if (this.isModified('password')) {
+//           this.password = await generateHash(this.password);
+//         }
+//         next();
+//       });
+//       return userSchema;
+//     },
+//   },
+// ]);

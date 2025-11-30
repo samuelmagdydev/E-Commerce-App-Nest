@@ -3,14 +3,32 @@ import {
   ConflictException,
   Injectable,
 } from '@nestjs/common';
-import { emailEvent, IUser } from 'src/common';
-import { UserRepository } from 'src/DB';
+import { createNumericalOtp, emailEvent, IUser, OtpEnum } from 'src/common';
+import { OtpRepository, UserRepository } from 'src/DB';
 import { SignupBodyDTO } from './dto/auth.dto';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class AuthenticationService {
   private users: IUser[] = [];
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly otpRepository: OtpRepository,
+  ) {}
+
+
+  private async createConfirmEmailOtp (userId:Types.ObjectId){
+      await this.otpRepository.create({
+      data: [
+        {
+          code: createNumericalOtp(),
+          expiredAt: new Date(Date.now() + 2 * 60 * 1000),
+          createdBy: userId,
+          type: OtpEnum.CONFIRM_EMAIL,
+        },
+      ],
+    });
+  }
 
   async signup(data: SignupBodyDTO): Promise<string> {
     const { email, password, username } = data;
@@ -31,7 +49,7 @@ export class AuthenticationService {
       );
     }
 
-    emailEvent.emit("confirmEmail" , {to : email , otp :"301175"})
+   await this.createConfirmEmailOtp(user._id);  
     return 'Done';
   }
 }

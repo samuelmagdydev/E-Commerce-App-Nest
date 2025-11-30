@@ -7,6 +7,7 @@ import {
 } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 import { GenderEnum, generateHash, ProviderEnum } from 'src/common';
+import { OtpDocument } from './otp.model';
 
 @Schema({
   strictQuery: true,
@@ -84,9 +85,18 @@ export class User {
     required: false,
   })
   changeCredentials: Date;
+
+  @Virtual()
+  otp: OtpDocument[];
 }
 export type UserDocument = HydratedDocument<User>;
 const userSchema = SchemaFactory.createForClass(User);
+
+userSchema.virtual('otp', {
+  localField: '_id',
+  foreignField: 'createdBy',
+  ref: 'Otp',
+});
 
 userSchema.pre('save', async function (next) {
   if (this.isModified('password')) {

@@ -7,7 +7,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { AuthenticationService } from './auth.service';
-import { SignupBodyDTO } from './dto/auth.dto';
+import { ResendConfirmEmailDTO, SignupBodyDTO } from './dto/auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -16,6 +16,14 @@ export class AuthController {
   @Post('/signup')
   async signUp(@Body() body: SignupBodyDTO): Promise<{ message: string }> {
     await this.authenticationService.signup(body);
+    return { message: 'Done' };
+  }
+
+  @Post('/resend-confirm-email')
+  async resendConfirmEmail(
+    @Body() body: ResendConfirmEmailDTO,
+  ): Promise<{ message: string }> {
+    await this.authenticationService.resendConfirmEmail(body);
     return { message: 'Done' };
   }
 

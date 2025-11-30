@@ -2,10 +2,11 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { createNumericalOtp, emailEvent, IUser, OtpEnum } from 'src/common';
 import { OtpRepository, UserRepository } from 'src/DB';
-import { SignupBodyDTO } from './dto/auth.dto';
+import { ResendConfirmEmailDTO, SignupBodyDTO } from './dto/auth.dto';
 import { Types } from 'mongoose';
 
 @Injectable()
@@ -16,9 +17,8 @@ export class AuthenticationService {
     private readonly otpRepository: OtpRepository,
   ) {}
 
-
-  private async createConfirmEmailOtp (userId:Types.ObjectId){
-      await this.otpRepository.create({
+  private async createConfirmEmailOtp(userId: Types.ObjectId) {
+    await this.otpRepository.create({
       data: [
         {
           code: createNumericalOtp(),
@@ -49,7 +49,30 @@ export class AuthenticationService {
       );
     }
 
-   await this.createConfirmEmailOtp(user._id);  
+    await this.createConfirmEmailOtp(user._id);
+    return 'Done';
+  }
+
+  async resendConfirmEmail(data: ResendConfirmEmailDTO): Promise<string> {
+    const { email } = data;
+    const user = await this.userRepository.findOne({
+      filter: { email, confirmedAt: { $exists: false } },
+      options: {
+        populate: [{ path: 'otp', match: { type: OtpEnum.CONFIRM_EMAIL } }],
+      },
+    });
+    if (!user) {
+      throw new NotFoundException('Fail To Find Matched Account');
+    }
+
+    if (user.otp?.length) {
+      throw new ConflictException(
+        `Sorry We Can Not Grant You A New OTP Until The Existing One Become Expired Please Try Again After : ${user.otp[0].expiredAt}`,
+      );
+    }
+
+    await this.createConfirmEmailOtp(user._id);
+
     return 'Done';
   }
 }

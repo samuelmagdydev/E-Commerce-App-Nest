@@ -8,18 +8,13 @@ import {
 } from 'class-validator';
 import { IsMatch } from 'src/common';
 
-export class SignupBodyDTO {
-  @Length(4, 20, {
-    message: 'Username must be between 4 and 20 characters long',
-  })
-  @IsString()
-  @IsNotEmpty()
-  username: string;
-
+export class ResendConfirmEmailDTO {
   @IsEmail({}, { message: 'Invalid email format' })
   @IsNotEmpty()
   email: string;
+}
 
+export class LoginBodyDTO extends ResendConfirmEmailDTO {
   @IsStrongPassword(
     {
       minLength: 8,
@@ -35,6 +30,15 @@ export class SignupBodyDTO {
   )
   @IsNotEmpty()
   password: string;
+}
+
+export class SignupBodyDTO extends LoginBodyDTO {
+  @Length(4, 20, {
+    message: 'Username must be between 4 and 20 characters long',
+  })
+  @IsString()
+  @IsNotEmpty()
+  username: string;
 
   @ValidateIf((data: SignupBodyDTO) => {
     return Boolean(data.password);

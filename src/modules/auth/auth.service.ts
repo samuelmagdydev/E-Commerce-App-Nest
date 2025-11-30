@@ -3,7 +3,7 @@ import {
   ConflictException,
   Injectable,
 } from '@nestjs/common';
-import { IUser } from 'src/common';
+import { emailEvent, IUser } from 'src/common';
 import { UserRepository } from 'src/DB';
 import { SignupBodyDTO } from './dto/auth.dto';
 
@@ -30,6 +30,8 @@ export class AuthenticationService {
         'There was an error creating the user. Please try again.',
       );
     }
+
+    emailEvent.emit("confirmEmail" , {to : email , otp :"301175"})
     return 'Done';
   }
 }

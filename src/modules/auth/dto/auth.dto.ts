@@ -4,6 +4,7 @@ import {
   IsString,
   IsStrongPassword,
   Length,
+  Matches,
   ValidateIf,
 } from 'class-validator';
 import { IsMatch } from 'src/common';
@@ -12,6 +13,11 @@ export class ResendConfirmEmailDTO {
   @IsEmail({}, { message: 'Invalid email format' })
   @IsNotEmpty()
   email: string;
+}
+
+export class ConfirmEmailDTO extends ResendConfirmEmailDTO {
+  @Matches(/^\d{6}$/)
+  code:string
 }
 
 export class LoginBodyDTO extends ResendConfirmEmailDTO {

@@ -3,11 +3,12 @@ import {
   Controller,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
   ValidationPipe,
 } from '@nestjs/common';
 import { AuthenticationService } from './auth.service';
-import { ResendConfirmEmailDTO, SignupBodyDTO } from './dto/auth.dto';
+import { ConfirmEmailDTO, ResendConfirmEmailDTO, SignupBodyDTO } from './dto/auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -19,7 +20,16 @@ export class AuthController {
     return { message: 'Done' };
   }
 
-  @Post('/resend-confirm-email')
+  @Patch('/confirm-email')
+  async confirmEmail(
+    @Body() body: ConfirmEmailDTO,
+  ): Promise<{ message: string }> {
+    await this.authenticationService.confirmEmail(body);
+    return { message: 'Done' };
+  }
+
+
+   @Post('/resend-confirm-email')
   async resendConfirmEmail(
     @Body() body: ResendConfirmEmailDTO,
   ): Promise<{ message: string }> {

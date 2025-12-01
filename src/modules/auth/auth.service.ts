@@ -4,9 +4,19 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { createNumericalOtp, emailEvent, IUser, OtpEnum } from 'src/common';
+import {
+  createNumericalOtp,
+  emailEvent,
+  IUser,
+  OtpEnum,
+  SecurityService,
+} from 'src/common';
 import { OtpRepository, UserRepository } from 'src/DB';
-import { ResendConfirmEmailDTO, SignupBodyDTO } from './dto/auth.dto';
+import {
+  ConfirmEmailDTO,
+  ResendConfirmEmailDTO,
+  SignupBodyDTO,
+} from './dto/auth.dto';
 import { Types } from 'mongoose';
 
 @Injectable()
@@ -15,6 +25,7 @@ export class AuthenticationService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly otpRepository: OtpRepository,
+    private readonly securityService: SecurityService,
   ) {}
 
   private async createConfirmEmailOtp(userId: Types.ObjectId) {
@@ -72,6 +83,36 @@ export class AuthenticationService {
     }
 
     await this.createConfirmEmailOtp(user._id);
+
+    return 'Done';
+  }
+
+  async confirmEmail(data: ConfirmEmailDTO): Promise<string> {
+    const { email, code } = data;
+    const user = await this.userRepository.findOne({
+      filter: { email, confirmedAt: { $exists: false } },
+      options: {
+        populate: [{ path: 'otp', match: { type: OtpEnum.CONFIRM_EMAIL } }],
+      },
+    });
+    if (!user) {
+      throw new NotFoundException('Fail To Find Matched Account');
+    }
+
+    if (
+      !(
+        user.otp?.length &&
+        await this.securityService.compareHassh(code, user.otp[0].code)
+      )
+    ) {
+      throw new BadRequestException('Invalid Or Expired OTP Code');
+    }
+
+    user.confirmedAt = new Date();
+    await user.save();
+    await this.otpRepository.deleteOne({
+      filter: { _id: user.otp[0]._id },
+    });
 
     return 'Done';
   }

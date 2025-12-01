@@ -58,6 +58,13 @@ export class User {
   })
   confirmemail: Date;
 
+
+    @Prop({
+    type: Date,
+    required: false,
+  })
+  confirmedAt: Date;
+
   @Prop({
     type: String,
     required: function (this: User) {

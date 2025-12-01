@@ -8,7 +8,12 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { AuthenticationService } from './auth.service';
-import { ConfirmEmailDTO, ResendConfirmEmailDTO, SignupBodyDTO } from './dto/auth.dto';
+import {
+  ConfirmEmailDTO,
+  LoginBodyDTO,
+  ResendConfirmEmailDTO,
+  SignupBodyDTO,
+} from './dto/auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -28,8 +33,7 @@ export class AuthController {
     return { message: 'Done' };
   }
 
-
-   @Post('/resend-confirm-email')
+  @Post('/resend-confirm-email')
   async resendConfirmEmail(
     @Body() body: ResendConfirmEmailDTO,
   ): Promise<{ message: string }> {
@@ -37,9 +41,13 @@ export class AuthController {
     return { message: 'Done' };
   }
 
-  @HttpCode(HttpStatus.OK)
   @Post('/login')
-  logIn() {
-    return 'Log In Page';
+  @HttpCode(HttpStatus.OK)
+  async logIn(@Body() body: LoginBodyDTO): Promise<{
+    message: string;
+    data: { credentials: { access_token: string; refresh_token: string } };
+  }> {
+    const credentials = await this.authenticationService.login(body);
+    return { message: 'Done', data: { credentials } }; 
   }
 }

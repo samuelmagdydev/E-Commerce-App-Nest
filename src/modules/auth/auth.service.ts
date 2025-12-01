@@ -9,15 +9,19 @@ import {
   emailEvent,
   IUser,
   OtpEnum,
+  ProviderEnum,
   SecurityService,
 } from 'src/common';
 import { OtpRepository, UserRepository } from 'src/DB';
 import {
   ConfirmEmailDTO,
+  LoginBodyDTO,
   ResendConfirmEmailDTO,
   SignupBodyDTO,
 } from './dto/auth.dto';
 import { Types } from 'mongoose';
+import { sign } from 'jsonwebtoken';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthenticationService {
@@ -26,6 +30,7 @@ export class AuthenticationService {
     private readonly userRepository: UserRepository,
     private readonly otpRepository: OtpRepository,
     private readonly securityService: SecurityService,
+    private readonly jwtService : JwtService
   ) {}
 
   private async createConfirmEmailOtp(userId: Types.ObjectId) {
@@ -102,7 +107,7 @@ export class AuthenticationService {
     if (
       !(
         user.otp?.length &&
-        await this.securityService.compareHassh(code, user.otp[0].code)
+        (await this.securityService.compareHassh(code, user.otp[0].code))
       )
     ) {
       throw new BadRequestException('Invalid Or Expired OTP Code');
@@ -115,5 +120,29 @@ export class AuthenticationService {
     });
 
     return 'Done';
+  }
+
+  async login(data: LoginBodyDTO): Promise<{access_token:string ; refresh_token:string}> {
+    const { email, password } = data;
+    const user = await this.userRepository.findOne({
+      filter: {
+        email,
+        confirmedAt: { $exists: true },
+        provider: ProviderEnum.SYSTEM,
+      },
+    });
+    if (!user) {
+      throw new NotFoundException('Incorrect Email Or Password');
+    }
+
+    if (!(await this.securityService.compareHassh(password, user.password))) {
+      throw new NotFoundException('Incorrect Email Or Password');
+    }
+
+    const credentials = {
+      access_token : await this.jwtService.signAsync({sub : user._id} ,{secret:"afjalfija" , expiresIn :60}),
+      refresh_token : await this.jwtService.signAsync({sub : user._id} ,{secret:"afjalfija" , expiresIn : "1y"}),
+    }
+    return credentials;
   }
 }
